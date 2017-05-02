@@ -54,16 +54,15 @@ public class HtmlIndexWriter {
 
     private Map<String,Object> custom(Resource[] resultDataFiles,Map<String,Map<String, AggregatedResponses>> datas) {
         List<IndexObject> tests = new ArrayList<IndexObject>(resultDataFiles.length);
-        boolean success=true;
+        boolean success;
         String testResult;
         int total=0;
         int successInt=0;
         int fail=0;
 
-
-
         for (int i=0;i<resultDataFiles.length;i++) {
             Resource resource=resultDataFiles[i];
+            success=true;
             if(!resource.getFilename().isEmpty() && resource.getFilename().lastIndexOf('.') > -1) {
                 total++;
                 for (Map.Entry<String, AggregatedResponses> entry : datas.get(resource.getFilename().substring(0, resource.getFilename().lastIndexOf('.'))+".jtl").entrySet()) {
@@ -96,7 +95,6 @@ public class HtmlIndexWriter {
 
             }
         }
-
         tests.get(0).setTotal(total);
         tests.get(0).setSuccess(successInt);
         tests.get(0).setFail(fail);

@@ -216,7 +216,7 @@ public class Samples {
   public long getMin() {
     assertFinished();
     if( !hasSamples() ) {
-      throw new IllegalStateException("No samples");
+      min=0;
     }
     return min;
   }
@@ -224,7 +224,7 @@ public class Samples {
   public long getMax() {
     assertFinished();
     if( !hasSamples() ) {
-      throw new IllegalStateException("No samples");
+      max=0;
     }
     return max;
   }
@@ -236,7 +236,7 @@ public class Samples {
     assertFinished();
     long count = getSuccessCount();
     if( count == 0 ) {
-      throw new IllegalStateException("No samples");
+      return 0;
     }
     return (long) total / count;
   }
