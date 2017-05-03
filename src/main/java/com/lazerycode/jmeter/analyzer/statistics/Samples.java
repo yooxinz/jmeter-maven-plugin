@@ -18,47 +18,54 @@ import java.util.*;
  */
 public class Samples {
 
-  private static final float SECOND = 1000f;
+  public static final float SECOND = 1000f;
 
   // number or error samples
-  private long errors = 0;
+  public long errors = 0;
 
   // number of success samples
-  private long success = 0;
+  public long success = 0;
 
   // collected samples
-  private List<Long> samples = new ArrayList<Long>();
+  public List<Long> samples = new ArrayList<Long>();
   // timestamps corresponding to samples
-  private List<Long> timestamps = new ArrayList<Long>();
+  public List<Long> timestamps = new ArrayList<Long>();
 
   // minimum sample timestamp
-  private long minTimestamp = Long.MAX_VALUE;
+  public long minTimestamp = Long.MAX_VALUE;
   // maximum sample timestamp
-  private long maxTimestamp = Long.MIN_VALUE;
+  public long maxTimestamp = Long.MIN_VALUE;
 
   // minimum sample value
-  private long min = Long.MAX_VALUE;
+  public long min = Long.MAX_VALUE;
   // maximum sample value
-  private long max = Long.MIN_VALUE;
-  private volatile boolean finished = false;
+  public long max = Long.MIN_VALUE;
+
+  // minimum sample value
+  public long sizemin = Long.MAX_VALUE;
+
+  // maximum sample value
+  public long sizemax = Long.MIN_VALUE;
+  public volatile boolean finished = false;
 
   // current number of samples which are aggregated into a single sample
-  private int compression = 1;
+  public int compression = 1;
 
   // maximum number of samples to store
-  private final int maxSamplesCount;
+  public final int maxSamplesCount;
 
-  private List<Long> samplesBuffer = new ArrayList<Long>();
-  private List<Long> timestampsBuffer = new ArrayList<Long>();
+  public List<Long> samplesBuffer = new ArrayList<Long>();
+  public List<Long> timestampsBuffer = new ArrayList<Long>();
 
 
-  private double total = 0;
+  public double total = 0;
+  public double sizetotal = 0;
   // sum of all values each powered by 2
-  private double totalPowered2 = 0;
-  private long standardDeviation;
+  public double totalPowered2 = 0;
+  public long standardDeviation;
 
   // The value histogram
-  private Map<Long, ValueCount> histogram;
+  public Map<Long, ValueCount> histogram;
 
 
   // ----------------------
@@ -229,6 +236,24 @@ public class Samples {
     return max;
   }
 
+  public long getSizemin() {
+    assertFinished();
+    if( !hasSamples() ) {
+      sizemin=0;
+    }
+    return sizemin;
+  }
+
+  public long getSizemax() {
+    assertFinished();
+    if( !hasSamples() ) {
+      sizemax=0;
+    }
+    return sizemax;
+  }
+
+
+
   /**
    * @return The average for all samples
    */
@@ -241,9 +266,23 @@ public class Samples {
     return (long) total / count;
   }
 
+  public long getSizeaverage() {
+    assertFinished();
+    long count = getSuccessCount();
+    if( count == 0 ) {
+      return 0;
+    }
+    return (long) sizetotal / count;
+  }
+
   public long getTotal() {
     assertFinished();
     return (long)total;
+  }
+
+  public long getSizetotal() {
+    assertFinished();
+    return (long)sizetotal;
   }
 
   public long getStandardDeviation() {
@@ -303,13 +342,13 @@ public class Samples {
 
 
 
-  private void assertNotFinished() {
+  public void assertNotFinished() {
     if( finished ) {
       throw new IllegalStateException("Already finished");
     }
   }
 
-  private void assertFinished() {
+  public void assertFinished() {
     if( !finished ) {
       throw new IllegalStateException("Not finished");
     }
@@ -319,7 +358,7 @@ public class Samples {
    * set min / max timestamp
    * @param timestamp the timestamp
    */
-  private void setTimestamp(long timestamp) {
+  public void setTimestamp(long timestamp) {
 
     if( timestamp < minTimestamp ) {
       minTimestamp = timestamp;
@@ -334,7 +373,7 @@ public class Samples {
   /**
    * Collect timestamp and value
    */
-  private void add(long timestamp, long value) {
+  public void add(long timestamp, long value) {
 
     if( maxSamplesCount == 0 ) {
       return;
@@ -379,7 +418,7 @@ public class Samples {
    * @param samplesBuffer  samples to be aggregated. will be cleared
    * @param timestampsBuffer timestamps to be aggregated
    */
-  private void addAggregated(List<Long> samplesBuffer, List<Long> timestampsBuffer) {
+  public void addAggregated(List<Long> samplesBuffer, List<Long> timestampsBuffer) {
 
     long firstTimestamp = timestampsBuffer.get(0);
     long lastTimestamp = timestampsBuffer.get(timestampsBuffer.size()-1);
@@ -399,7 +438,7 @@ public class Samples {
   /**
    * Cuts a list of samples in half by aggregating pairs a samples
    */
-  private void halve() {
+  public void halve() {
 
     List<Long> newSamples = new ArrayList<Long>();
     List<Long> newTimestamps = new ArrayList<Long>();
@@ -437,4 +476,14 @@ public class Samples {
     timestamps = newTimestamps;
   }
 
+  public void setSizemin(long sizemin) {
+    this.sizemin = sizemin;
+  }
+  public void setSizemax(long sizemax) {
+    this.sizemax = sizemax;
+  }
+
+  public void setSizetotal(double sizetotal) {
+    this.sizetotal = sizetotal;
+  }
 }

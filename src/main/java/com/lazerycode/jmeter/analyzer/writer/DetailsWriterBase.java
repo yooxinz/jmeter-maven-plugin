@@ -5,6 +5,7 @@ import com.lazerycode.jmeter.analyzer.statistics.Samples;
 import freemarker.template.TemplateException;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.lazerycode.jmeter.analyzer.util.FileUtil.urlEncode;
@@ -49,6 +50,11 @@ public abstract class DetailsWriterBase extends TextWriterBase {
 
     durationsFilename = urlEncode(name) + getDurationsSuffix();
     data = aggregatedResponses.getDurationByUri();
+    for(Map.Entry<String,Samples> entry:aggregatedResponses.getSizeByUri().entrySet()){
+      data.get(entry.getKey()).setSizemin(entry.getValue().getMin());
+      data.get(entry.getKey()).setSizemax(entry.getValue().getMax());
+      data.get(entry.getKey()).setSizetotal(entry.getValue().getTotal());
+    }
     write(durationsFilename, data);
 
     durationsFilename = urlEncode(name) + getSizesSuffix();
