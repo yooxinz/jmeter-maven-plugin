@@ -95,6 +95,8 @@ public class JMeterResultParser {
     private Map<String, AggregatedResponses> results = new LinkedHashMap<String, AggregatedResponses>();
     private Set<String> nodeNames;
 
+    private String str = null;
+
     /**
      * Constructor.
      * Fields configured from Environment
@@ -176,6 +178,20 @@ public class JMeterResultParser {
       super.startElement(u, localName, qName, attributes);
     }
 
+    public void characters(char[] ch, int start, int length) throws SAXException {
+      str = new String(ch, start, length);
+    }
+
+    @Override
+    public void endElement (String uri, String localName, String qName) throws SAXException {
+      if("failureMessage".equals(qName)||"failureMessage".equals(localName)){
+
+          System.out.println(str);
+
+      }
+    }
+
+
     @Override
     public void endDocument() throws SAXException {
       super.endDocument();
@@ -183,7 +199,7 @@ public class JMeterResultParser {
       for( AggregatedResponses responses : results.values() ) {
         responses.finish();
       }
-      getLog().info("Finished Parsing "+parsedCount+" entries.");
+        getLog().info("Finished Parsing "+parsedCount+" entries.");
     }
 
     //==================================================================================================================
