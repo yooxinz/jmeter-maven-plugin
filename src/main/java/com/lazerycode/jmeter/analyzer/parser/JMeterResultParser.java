@@ -108,6 +108,7 @@ public class JMeterResultParser {
     private long activeThreads=0;
     private int responseCode=0;
     private AggregatedResponses resultContainer=null;
+    private String tag=null;
 
     /**
      * Constructor.
@@ -173,10 +174,10 @@ public class JMeterResultParser {
         // --- parse responseCode
         responseCode = getResponseCode(attributes);
 
-        if(success){
+        tag=attributes.getValue("tn").split("\\s+")[0];
           // ==== add data to the resultContainer
-          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,"");
-        }
+          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success);
+
         parsedCount++;
 
         // write a log message every 10000 entries
@@ -194,10 +195,12 @@ public class JMeterResultParser {
     @Override
     public void endElement(String u, String localName, String qName)
             throws SAXException {
-
       if("failureMessage".equals(localName)||"failureMessage".equals(qName)){
         if(str.toString()!=null&&str.toString().length()>0&&!str.toString().trim().isEmpty()){
-          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str.toString());
+          if(results.size()>0){
+            results.get(tag).getDurationByUri().get(uri).setFailMessage(str.toString());
+
+          }
         }
       }
     }
@@ -226,7 +229,7 @@ public class JMeterResultParser {
      * @param success httpSample success
      */
     private void addData(AggregatedResponses resultContainer, String uri,
-                         long timestamp, long bytes, long duration, long activeThreads, int responseCode, boolean success,String str) {
+                         long timestamp, long bytes, long duration, long activeThreads, int responseCode, boolean success) {
 
 
       StatusCodes statusCodes = resultContainer.getStatusCodes();
@@ -262,7 +265,7 @@ public class JMeterResultParser {
       Map<String, Samples> durationByUriMapping = resultContainer.getDurationByUri();
 
       add(sizeByUriMapping, uri, timestamp, bytes, success);
-      add(durationByUriMapping, uri, timestamp, duration, success,str);
+      add(durationByUriMapping, uri, timestamp, duration, success);
 
       //set start and end time
       if( resultContainer.getStart() == 0 ) {
@@ -430,38 +433,6 @@ public class JMeterResultParser {
           }
         }
       }
-
-    /**
-     * 添加错误信息
-     * @param uriSamples
-     * @param uri
-     * @param timestamp
-     * @param value
-     * @param success
-     * @param str
-     */
-    private void add(Map<String, Samples> uriSamples, String uri, long timestamp, long value, boolean success,String str) {
-
-      if( uriSamples != null ) {
-
-        Samples samples = uriSamples.get(uri);
-
-        if( samples == null ) {
-          // no Sample was previously stored for the uri.
-          samples = new Samples(0, false); // 0 = don't collect samples. This is important, otherwise a OOM may occur if the result set is big
-
-          uriSamples.put(uri, samples);
-        }
-
-        if(success) {
-          samples.addSample(timestamp, value);
-        }
-        else {
-          samples.addError(timestamp);
-          samples.setFailMessage(str);
-        }
-      }
-    }
 
     private void  add(Map<Integer, Set<String>> uriByStatusCode, Integer code, String uri){
       if(uriByStatusCode != null){
