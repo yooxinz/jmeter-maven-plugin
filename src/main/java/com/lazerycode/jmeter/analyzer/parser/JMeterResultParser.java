@@ -39,6 +39,7 @@ public class JMeterResultParser {
    */
   private static final int LOGMESSAGE_ITEMS = 10000;
 
+
   /**
    * Parses a JMeter Result XML file and provides a {@link AggregatedResponses} for every {@link Parser#getKey key}
    *
@@ -97,6 +98,22 @@ public class JMeterResultParser {
 
     private String str = null;
 
+    private String tag;
+
+    private Attributes attr;
+
+
+    String uri=null;
+    String timestampString=null;
+    long timestamp = 0;
+    boolean success=false;
+    long bytes =0;
+    long duration=0;
+    long activeThreads=0;
+    int responseCode=0;
+    AggregatedResponses resultContainer=null;
+
+
     /**
      * Constructor.
      * Fields configured from Environment
@@ -136,36 +153,45 @@ public class JMeterResultParser {
 
     @Override
     public void startElement(String u, String localName, String qName, Attributes attributes) throws SAXException {
+      if(localName!=null&&localName.length()>0){
+        tag=localName;
+      }else {
+        tag=qName;
+      }
+      if(nodeNames.contains(tag)){
+        attr=attributes;
+      }
 
-      if( nodeNames.contains(localName) || nodeNames.contains(qName) ) {
+      super.startElement(u, localName, qName, attributes);
+    }
 
-        String uri = attributes.getValue("lb");
-        String timestampString = attributes.getValue("ts");
-        long timestamp = Long.parseLong(timestampString);
+    public void characters(char[] ch, int start, int length) throws SAXException {
+      str = new String(ch, start, length);
 
-        boolean success = Boolean.valueOf(attributes.getValue("s"));
 
-        String key = getKey(attributes);
+      if( nodeNames.contains(tag) ) {
+         uri = attr.getValue("lb");
+         timestampString = attr.getValue("ts");
+         timestamp = Long.parseLong(timestampString);
+
+         success = Boolean.valueOf(attr.getValue("s"));
+
+        String key = getKey(attr);
 
         // --- create / provide result container
-        AggregatedResponses resultContainer = getResult(key);
-
+        resultContainer = getResult(key);
 
         // --- parse bytes
-        long bytes = parseLong(attributes, "by");
+         bytes = parseLong(attr, "by");
 
         // --- parse duration
-        long duration = parseLong(attributes, "t");
+         duration = parseLong(attr, "t");
 
         // --- parse active thread for all groups
-        long activeThreads = parseLong(attributes, "na");
+         activeThreads = parseLong(attr, "na");
 
         // --- parse responseCode
-        int responseCode = getResponseCode(attributes);
-
-        // ==== add data to the resultContainer
-        addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success);
-
+         responseCode = getResponseCode(attr);
 
         parsedCount++;
 
@@ -175,22 +201,15 @@ public class JMeterResultParser {
         }
       }
 
-      super.startElement(u, localName, qName, attributes);
-    }
+      if("failureMessage".equals(tag)){
+        if(str!=null&&str.length()>0&&!str.trim().isEmpty()){
+          // ==== add data to the resultContainer
+          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str);
+        }
 
-    public void characters(char[] ch, int start, int length) throws SAXException {
-      str = new String(ch, start, length);
-    }
-
-    @Override
-    public void endElement (String uri, String localName, String qName) throws SAXException {
-      if("failureMessage".equals(qName)||"failureMessage".equals(localName)){
-
-          System.out.println(str);
 
       }
     }
-
 
     @Override
     public void endDocument() throws SAXException {
@@ -216,7 +235,7 @@ public class JMeterResultParser {
      * @param success httpSample success
      */
     private void addData(AggregatedResponses resultContainer, String uri,
-                         long timestamp, long bytes, long duration, long activeThreads, int responseCode, boolean success) {
+                         long timestamp, long bytes, long duration, long activeThreads, int responseCode, boolean success,String str) {
 
 
       StatusCodes statusCodes = resultContainer.getStatusCodes();
@@ -252,7 +271,7 @@ public class JMeterResultParser {
       Map<String, Samples> durationByUriMapping = resultContainer.getDurationByUri();
 
       add(sizeByUriMapping, uri, timestamp, bytes, success);
-      add(durationByUriMapping, uri, timestamp, duration, success);
+      add(durationByUriMapping, uri, timestamp, duration, success,str);
 
       //set start and end time
       if( resultContainer.getStart() == 0 ) {
@@ -420,6 +439,38 @@ public class JMeterResultParser {
           }
         }
       }
+
+    /**
+     * 添加错误信息
+     * @param uriSamples
+     * @param uri
+     * @param timestamp
+     * @param value
+     * @param success
+     * @param str
+     */
+    private void add(Map<String, Samples> uriSamples, String uri, long timestamp, long value, boolean success,String str) {
+
+      if( uriSamples != null ) {
+
+        Samples samples = uriSamples.get(uri);
+
+        if( samples == null ) {
+          // no Sample was previously stored for the uri.
+          samples = new Samples(0, false); // 0 = don't collect samples. This is important, otherwise a OOM may occur if the result set is big
+
+          uriSamples.put(uri, samples);
+        }
+
+        if(success) {
+          samples.addSample(timestamp, value);
+        }
+        else {
+          samples.addError(timestamp);
+          samples.setFailMessage(str);
+        }
+      }
+    }
 
     private void  add(Map<Integer, Set<String>> uriByStatusCode, Integer code, String uri){
       if(uriByStatusCode != null){
