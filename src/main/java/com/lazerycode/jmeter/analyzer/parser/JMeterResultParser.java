@@ -196,8 +196,6 @@ public class JMeterResultParser {
             throws SAXException {
 
       if("failureMessage".equals(localName)||"failureMessage".equals(qName)){
-        System.out.println("---------------1");
-        System.out.println(str.toString());
         if(str.toString()!=null&&str.toString().length()>0&&!str.toString().trim().isEmpty()){
           addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str.toString());
         }
