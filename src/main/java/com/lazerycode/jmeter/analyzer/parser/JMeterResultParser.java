@@ -113,7 +113,6 @@ public class JMeterResultParser {
     int responseCode=0;
     AggregatedResponses resultContainer=null;
 
-
     /**
      * Constructor.
      * Fields configured from Environment
@@ -168,7 +167,6 @@ public class JMeterResultParser {
     public void characters(char[] ch, int start, int length) throws SAXException {
       str = new String(ch, start, length);
 
-
       if( nodeNames.contains(tag) ) {
          uri = attr.getValue("lb");
          timestampString = attr.getValue("ts");
@@ -193,6 +191,11 @@ public class JMeterResultParser {
         // --- parse responseCode
          responseCode = getResponseCode(attr);
 
+         if(success){
+           addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,"");
+         }else {
+
+         }
         parsedCount++;
 
         // write a log message every 10000 entries
@@ -200,15 +203,13 @@ public class JMeterResultParser {
           getLog().info("Parsed "+parsedCount+" entries ...");
         }
       }
-
       if("failureMessage".equals(tag)){
         if(str!=null&&str.length()>0&&!str.trim().isEmpty()){
           // ==== add data to the resultContainer
           addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str);
         }
-
-
       }
+
     }
 
     @Override
