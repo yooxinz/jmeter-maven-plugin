@@ -99,15 +99,15 @@ public class JMeterResultParser {
     private String str = null;
 
 
-    String uri=null;
-    String timestampString=null;
-    long timestamp = 0;
-    boolean success=false;
-    long bytes =0;
-    long duration=0;
-    long activeThreads=0;
-    int responseCode=0;
-    AggregatedResponses resultContainer=null;
+    private String uri=null;
+    private String timestampString=null;
+    private long timestamp = 0;
+    private boolean success=false;
+    private long bytes =0;
+    private long duration=0;
+    private long activeThreads=0;
+    private int responseCode=0;
+    private AggregatedResponses resultContainer=null;
 
     /**
      * Constructor.
