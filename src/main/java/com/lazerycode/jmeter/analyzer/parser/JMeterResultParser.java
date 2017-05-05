@@ -98,10 +98,6 @@ public class JMeterResultParser {
 
     private String str = null;
 
-    private String tag;
-
-    private Attributes attr;
-
 
     String uri=null;
     String timestampString=null;
@@ -152,50 +148,34 @@ public class JMeterResultParser {
 
     @Override
     public void startElement(String u, String localName, String qName, Attributes attributes) throws SAXException {
-      if(localName!=null&&localName.length()>0){
-        tag=localName;
-      }else {
-        tag=qName;
-      }
-      if(nodeNames.contains(tag)){
-        attr=attributes;
-      }
+      if( nodeNames.contains(localName)|| nodeNames.contains(qName)) {
+        uri = attributes.getValue("lb");
+        timestampString = attributes.getValue("ts");
+        timestamp = Long.parseLong(timestampString);
 
-      super.startElement(u, localName, qName, attributes);
-    }
+        success = Boolean.valueOf(attributes.getValue("s"));
 
-    public void characters(char[] ch, int start, int length) throws SAXException {
-      str = new String(ch, start, length);
-
-      if( nodeNames.contains(tag) ) {
-         uri = attr.getValue("lb");
-         timestampString = attr.getValue("ts");
-         timestamp = Long.parseLong(timestampString);
-
-         success = Boolean.valueOf(attr.getValue("s"));
-
-        String key = getKey(attr);
+        String key = getKey(attributes);
 
         // --- create / provide result container
         resultContainer = getResult(key);
 
         // --- parse bytes
-         bytes = parseLong(attr, "by");
+        bytes = parseLong(attributes, "by");
 
         // --- parse duration
-         duration = parseLong(attr, "t");
+        duration = parseLong(attributes, "t");
 
         // --- parse active thread for all groups
-         activeThreads = parseLong(attr, "na");
+        activeThreads = parseLong(attributes, "na");
 
         // --- parse responseCode
-         responseCode = getResponseCode(attr);
+        responseCode = getResponseCode(attributes);
 
-         if(success){
-           addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,"");
-         }else {
-
-         }
+        if(success){
+          // ==== add data to the resultContainer
+          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,"");
+        }
         parsedCount++;
 
         // write a log message every 10000 entries
@@ -203,16 +183,26 @@ public class JMeterResultParser {
           getLog().info("Parsed "+parsedCount+" entries ...");
         }
       }
-      if("failureMessage".equals(tag)){
-        if(str!=null&&str.length()>0&&!str.trim().isEmpty()){
-          // ==== add data to the resultContainer
-          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str);
-        }
-      }
+
+    }
+
+    public void characters(char[] ch, int start, int length) throws SAXException {
+      str = new String(ch, start, length);
 
     }
 
     @Override
+    public void endElement(String u, String localName, String qName)
+            throws SAXException {
+
+      if("failureMessage".equals(localName)||"failureMessage".equals(qName)){
+        if(str!=null&&str.length()>0&&!str.trim().isEmpty()){
+          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str);
+        }
+      }
+    }
+
+      @Override
     public void endDocument() throws SAXException {
       super.endDocument();
       //finish collection of responses/samples

@@ -67,7 +67,7 @@ public class Samples {
   // The value histogram
   public Map<Long, ValueCount> histogram;
 
-  private String failMessage="";
+  private List<String> failMessage=new ArrayList<String>();
 
   // ----------------------
 
@@ -488,12 +488,11 @@ public class Samples {
     this.sizetotal = sizetotal;
   }
 
-  public String getFailMessage() {
-    return failMessage;
+  public void setFailMessage(String failMessage) {
+    this.failMessage.add(failMessage);
   }
 
-  public void setFailMessage(String failMessage) {
-    this.failMessage +=failMessage;
+  public List<String> getFailMessage() {
+    return failMessage;
   }
-  
 }
