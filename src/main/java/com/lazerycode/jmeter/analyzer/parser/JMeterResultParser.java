@@ -96,7 +96,7 @@ public class JMeterResultParser {
     private Map<String, AggregatedResponses> results = new LinkedHashMap<String, AggregatedResponses>();
     private Set<String> nodeNames;
 
-    private String str = null;
+    private StringBuffer str = null;
 
 
     private String uri=null;
@@ -148,6 +148,7 @@ public class JMeterResultParser {
 
     @Override
     public void startElement(String u, String localName, String qName, Attributes attributes) throws SAXException {
+      str = new StringBuffer();
       if( nodeNames.contains(localName)|| nodeNames.contains(qName)) {
         uri = attributes.getValue("lb");
         timestampString = attributes.getValue("ts");
@@ -187,8 +188,7 @@ public class JMeterResultParser {
     }
 
     public void characters(char[] ch, int start, int length) throws SAXException {
-      str = new String(ch, start, length);
-
+      str.append(ch, start, length);
     }
 
     @Override
@@ -196,8 +196,10 @@ public class JMeterResultParser {
             throws SAXException {
 
       if("failureMessage".equals(localName)||"failureMessage".equals(qName)){
-        if(str!=null&&str.length()>0&&!str.trim().isEmpty()){
-          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str);
+        System.out.println("---------------1");
+        System.out.println(str.toString());
+        if(str.toString()!=null&&str.toString().length()>0&&!str.toString().trim().isEmpty()){
+          addData(resultContainer, uri, timestamp, bytes, duration, activeThreads, responseCode, success,str.toString());
         }
       }
     }
